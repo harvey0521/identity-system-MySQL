@@ -14,7 +14,9 @@ formatter = logging.Formatter(
 
 # 建立 log 檔輸出
 file_handler = logging.FileHandler(
-    "D:\\app.log\\app.log", mode="w", encoding="utf-8"  # 預設就是 mode="a" 加在原檔案後面模式
+    r"C:\Users\Harvey\OneDrive\code-training\work-training-Vue-log\app.log",
+    mode="w",
+    encoding="utf-8",  # 預設就是 mode="a" 加在原檔案後面模式
 )
 file_handler.setFormatter(formatter)
 logger.addHandler(file_handler)
@@ -53,7 +55,7 @@ def static_files(filename):
 def get_all():
     try:
         logging.info("執行取得資料")
-        
+
         result = get_all_dao()
 
         return response(True, "資料取得成功", result)
@@ -68,9 +70,9 @@ def get_all():
 def get(id):
     try:
         logging.info("執行查詢")
-        
+
         result = get_dao(id)
-        
+
         if result:
             return response(True, "查詢成功", result)
         else:
@@ -79,7 +81,6 @@ def get(id):
     except Exception as e:
         logging.error(f"查詢系統異常、錯誤訊息：{e}")  # f-string 自動轉字串
         return response(False, "查詢系統異常", None)
-        
 
 
 # 新增
@@ -87,24 +88,23 @@ def get(id):
 def post():
     try:
         logging.info("執行新增")
-        
+
         data = request.json
         logging.debug(data)
-        
+
         id_record = has_id_dao(data["id"])
 
         if not id_record:
 
             result = post_dao(data)
-            
+
             return response(True, "新增成功", result)
         else:
-            return response(False, f'新增失敗、此身分證資料已存在', id_record)
+            return response(False, f"新增失敗、此身分證資料已存在", id_record)
 
     except Exception as e:
         logging.error(f"新增系統異常、錯誤訊息：{e}")
         return response(False, "新增系統異常", None)
-        
 
 
 # 修改
@@ -112,7 +112,7 @@ def post():
 def put(id):
     try:
         logging.info("執行修改")
-        
+
         data = request.json
         logging.debug(data)
 
@@ -126,7 +126,6 @@ def put(id):
     except Exception as e:
         logging.error(f"修改系統異常、錯誤訊息：{e}")
         return response(False, "修改系統異常", None, None)
-        
 
 
 # 刪除

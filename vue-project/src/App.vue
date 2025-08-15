@@ -1,5 +1,6 @@
 <script setup>
 import { ref, reactive } from 'vue';
+import DataTable from 'datatables.net-vue3'
 
 const idInput = ref("");
 const nameInput = ref("");
@@ -20,6 +21,7 @@ const dataTable = ref([])
 const highlightId = ref('')
 const animation = ref(false)
 const deleteId = ref('')
+const showTable = ref(false)
 
 //取得輸入框內容
 function getListData() {
@@ -77,21 +79,25 @@ const options = {
       tr.classList.add('dataDel')
       setTimeout(() => {
         tr.classList.add('slipOut')
-      })
+      }, 50)
     }
   },
   rowCallback: function (tr, data) {
     tr.addEventListener('click', function () {
       setInputVal(data)
     })
-  }
+  },
+  headerCallback: function (thead) {
+    thead.classList.add('table-dark')
+  },
 }
 
 //處理datatable表格
-function setDataTable(data, highlight, animation) {
+function setDataTable(data, highlight, anim) {
+  showTable.value = true
   dataTable.value = data
   highlightId.value = highlight
-  animation.value = animation
+  animation.value = anim
 }
 
 //顯示身分證錯誤訊息
@@ -256,7 +262,7 @@ async function get() {
 
   setInputVal(result.data);
 
-  setDataTable([result.data], id, true);
+  setDataTable([result.data], null, true);
 }
 
 //新增
@@ -345,6 +351,7 @@ async function idDelete() {
 
 
   setTimeout(() => {
+    deleteId.value = null
     loadList();
   }, 800);
 
@@ -396,12 +403,14 @@ async function idDelete() {
         <button id="listBtn" class="btn btn-outline-primary" @click="loadList(null, true)">列表</button>
       </div>
     </div>
-    <div class="Table">
-      <!-- <table class="table table-striped"></table>  使用 bootstrap-->
-      <!-- id="dataTable" class="table table-striped border border-secondary-subtle" -->
-      <DataTable id="dataTable" class="table table-striped border border-secondary-subtle" :columns="columns"
-        :data="dataTable" :options="options" />
-    </div>
+    <transition name="fade">
+      <div class="Table" v-if="showTable">
+        <!-- <table class="table table-striped"></table>  使用 bootstrap-->
+        <!-- id="dataTable" class="table table-striped border border-secondary-subtle" -->
+        <DataTable class="table table-striped border border-secondary-subtle" :columns="columns" :data="dataTable"
+          :options="options" />
+      </div>
+    </transition>
   </div>
 </template>
 
@@ -467,50 +476,66 @@ async function idDelete() {
   color: green;
 }
 
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.5s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+.fade-enter-to,
+.fade-leave-from {
+  opacity: 1;
+}
+
 .Table {
-  display: none;
+  /* display: none; */
   overflow: hidden;
 }
 
-#dataTable th,
-#dataTable td {
+:deep(.dataTable th),
+/* datatable 初始化就有綁定 class='dataTable' 不用另外寫*/
+:deep(.dataTable td) {
   text-align: center;
 }
 
-#list tr:hover td {
+:deep(.dataTable tr:hover td) {
   background-color: #cce0ff;
   transform: scale(1.05);
   font-weight: bold;
   cursor: pointer;
 }
 
-#list tr:active td {
+:deep(.dataTable tr:active td) {
   background-color: #99ccff
 }
 
-tr.data {
+:deep(tr.data) {
   opacity: 0;
   transform: translateX(100%);
   transition: all 0.5s ease-in-out;
 }
 
-tr.slip {
+:deep(tr.slip) {
   opacity: 1;
   transform: translateX(0);
 }
 
-tr.dataDel {
+:deep(tr.dataDel) {
   opacity: 1;
   transform: translateX(0%) scale(1.1);
   transition: all 0.8s ease-in-out;
 }
 
-tr.slipOut {
+:deep(tr.slipOut) {
   opacity: 0;
   transform: translateX(100%) scale(-1);
 }
 
-tr.highlight td {
+:deep(tr.highlight td) {
   /* tr 在 html 不能做單獨動畫，只能針對 td */
   animation: add 1.5s ease-in-out;
 }

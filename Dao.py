@@ -7,9 +7,9 @@ import logging
 def get_all_dao():
     try:
         conn = get_db()
-        cursor = conn.cursor()
+        cursor = conn.cursor(dictionary=True)
 
-        cursor.execute("SELECT * FROM dbo.userInfo_harvey")
+        cursor.execute("SELECT * FROM tesk")
         rows = cursor.fetchall()
         logging.debug(rows)
 
@@ -17,7 +17,11 @@ def get_all_dao():
 
         for i in rows:
             users = UserVo(
-                id=i.id, name=i.name, phone=i.phone, address=i.address, other=i.other
+                id=i["id"],
+                name=i["name"],
+                phone=i["phone"],
+                address=i["address"],
+                other=i["other"],
             )
             result.append(users)
         logging.debug(result)
@@ -34,9 +38,9 @@ def get_all_dao():
 def get_dao(id: str):
     try:
         conn = get_db()
-        cursor = conn.cursor()
+        cursor = conn.cursor(dictionary=True)
 
-        cursor.execute("SELECT * FROM dbo.userInfo_harvey WHERE id = ?", (id,))
+        cursor.execute("SELECT * FROM tesk WHERE id = %s", (id,))
 
         row = cursor.fetchone()
         logging.debug(f"資料庫查詢結果：{row}")
@@ -45,11 +49,11 @@ def get_dao(id: str):
             logging.info(f"查詢成功、查到證號 {id} 的資料")
 
             result = UserVo(
-                id=row.id,
-                name=row.name,
-                phone=row.phone,
-                address=row.address,
-                other=row.other,
+                id=row["id"],
+                name=row["name"],
+                phone=row["phone"],
+                address=row["address"],
+                other=row["other"],
             )
             return result
         else:
@@ -68,7 +72,7 @@ def post_dao(data: dict):
         cursor = conn.cursor()
 
         cursor.execute(
-            "INSERT INTO dbo.userInfo_harvey (id, name, phone, address, other) VALUES (?, ?, ?, ?, ?)",
+            "INSERT INTO tesk (id, name, phone, address, other) VALUES (%s, %s, %s, %s, %s)",
             (data["id"], data["name"], data["phone"], data["address"], data["other"]),
         )
 
@@ -88,7 +92,7 @@ def put_dao(id: str, data: dict):
         cursor = conn.cursor()
 
         cursor.execute(
-            "UPDATE dbo.userInfo_harvey SET name=?, phone=?, address=?, other=? WHERE id=?",
+            "UPDATE tesk SET name=%s, phone=%s, address=%s, other=%s WHERE id=%s",
             (data["name"], data["phone"], data["address"], data["other"], id),
         )
         conn.commit()
@@ -96,7 +100,7 @@ def put_dao(id: str, data: dict):
         affected = cursor.rowcount  # 會回傳 1（代表有 1 筆被更新）
 
         logging.debug(f"有 {affected} 筆被更新")
-        
+
         if affected:
             logging.info(f"修改成功、已修改證號 {id} 的資料")
             return True
@@ -114,13 +118,13 @@ def delete_dao(id: str):
     try:
         conn = get_db()
         cursor = conn.cursor()
-        cursor.execute("DELETE FROM dbo.userInfo_harvey WHERE id=?", (id,))
+        cursor.execute("DELETE FROM tesk WHERE id=%s", (id,))
         conn.commit()
 
         affected = cursor.rowcount  # 會回傳 1（代表有 1 筆被更新）
 
         logging.debug(f"有 {affected} 筆被更新")
-        
+
         if affected:
             logging.info(f"刪除成功、已刪除證號 {id} 的資料")
             return True
@@ -137,19 +141,19 @@ def delete_dao(id: str):
 def has_id_dao(id: str):
     try:
         conn = get_db()
-        cursor = conn.cursor()
-        cursor.execute("SELECT * FROM dbo.userInfo_harvey WHERE id=?", (id,))
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("SELECT * FROM tesk WHERE id=%s", (id,))
         row = cursor.fetchone()
 
         if row:
-            logging.warning(f'新增失敗、此 {id} 身分證資料已存在')
+            logging.warning(f"新增失敗、此 {id} 身分證資料已存在")
 
             id_record = UserVo(
-                id=row.id,
-                name=row.name,
-                phone=row.phone,
-                address=row.address,
-                other=row.other,
+                id=row["id"],
+                name=row["name"],
+                phone=row["phone"],
+                address=row["address"],
+                other=row["other"],
             )
 
             return id_record
