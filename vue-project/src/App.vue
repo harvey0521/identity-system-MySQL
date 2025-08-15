@@ -1,4 +1,6 @@
 <script setup>
+import { ref, reactive } from 'vue';
+
 const idInput = ref("");
 const nameInput = ref("");
 const phoneInput = ref("");
@@ -13,6 +15,11 @@ const idInputClassEr = ref(false);
 const msgPh = ref("");
 const msgPhClassEr = ref(false);
 const phoneInputClassEr = ref(false);
+//表格
+const dataTable = ref([])
+const highlightId = ref('')
+const animation = ref(false)
+const deleteId = ref('')
 
 //取得輸入框內容
 function getListData() {
@@ -43,48 +50,48 @@ function handleApiFailure(result) {
   return false;
 }
 
-//處理datatable表格
-function setDataTable(data, highlightId, animation) {
-  if ($.fn.DataTable.isDataTable($("#dataTable"))) {
-    //DataTable 有初始化過 就清除重建
-    $("#dataTable").DataTable().clear().destroy();
+const columns = [
+  { data: 'id', title: '身分證字號' },
+  { data: 'name', title: '姓名' },
+  { data: 'phone', title: '電話' },
+  { data: 'address', title: '地址' },
+  { data: 'other', title: '備註' },
+];
+
+const options = {
+  order: [],      //不排序
+  language: {
+    url: '/zh-HANT.json',
+  },
+  createdRow: function (tr, data, dataIndex) {
+    if (data.id === highlightId.value) {
+      tr.classList.add('highlight')
+    }
+    if (animation.value) {
+      tr.classList.add('data')
+      setTimeout(() => {
+        tr.classList.add('slip')
+      }, (dataIndex + 1) * 100)
+    }
+    if (data.id === deleteId.value) {
+      tr.classList.add('dataDel')
+      setTimeout(() => {
+        tr.classList.add('slipOut')
+      })
+    }
+  },
+  rowCallback: function (tr, data) {
+    tr.addEventListener('click', function () {
+      setInputVal(data)
+    })
   }
+}
 
-  $(".Table").fadeIn("slow");
-
-  const table = $("#dataTable").DataTable({
-    data: data,
-    columns: [
-      { data: "id" },
-      { data: "name" },
-      { data: "phone" },
-      { data: "address" },
-      { data: "other" },
-    ],
-    createdRow: function (tr, data, dataIndex) {
-      if (data.id === highlightId) {
-        tr.classList.add("highlight");
-      }
-      if (animation) {
-        tr.classList.add("data");
-        setTimeout(() => {
-          tr.classList.add("slip");
-        }, (dataIndex + 1) * 100);
-      }
-    },
-    order: [], //不排序
-    language: {
-      url: "/static/zh-HANT.json",
-    },
-  });
-  //設定點擊事件 點表格填入 Input
-  $("#dataTable tbody")
-    .off("click")
-    .on("click", "tr", function () {
-      //這是初始化就綁定了，要先.off('click')重新綁定
-      const data = table.row(this).data();
-      setInputVal(data);
-    });
+//處理datatable表格
+function setDataTable(data, highlight, animation) {
+  dataTable.value = data
+  highlightId.value = highlight
+  animation.value = animation
 }
 
 //顯示身分證錯誤訊息
@@ -334,21 +341,12 @@ async function idDelete() {
     return;
   }
 
-  const table = $("#dataTable").DataTable();
-  const tr = table.rows().nodes(); //取得 DataTable 中的所有列，nodes() 轉成元素
+  deleteId.value = id
 
-  for (let i = 0; i < tr.length; i++) {
-    const trData = table.row(tr[i]).data();
-    if (trData.id === id) {
-      tr[i].classList.add("dataDel");
-      setTimeout(() => {
-        tr[i].classList.add("slipOut");
-      });
-      setTimeout(() => {
-        loadList();
-      }, 800);
-    }
-  }
+
+  setTimeout(() => {
+    loadList();
+  }, 800);
 
   setTimeout(() => {
     alert(result.message);
@@ -400,18 +398,9 @@ async function idDelete() {
     </div>
     <div class="Table">
       <!-- <table class="table table-striped"></table>  使用 bootstrap-->
-      <table id="dataTable" class="table table-striped border border-secondary-subtle">
-        <thead class="table-dark">
-          <tr>
-            <th>身分證字號</th>
-            <th>姓名</th>
-            <th>電話</th>
-            <th>地址</th>
-            <th>備註</th>
-          </tr>
-        </thead>
-        <tbody id="list"></tbody>
-      </table>
+      <!-- id="dataTable" class="table table-striped border border-secondary-subtle" -->
+      <DataTable id="dataTable" class="table table-striped border border-secondary-subtle" :columns="columns"
+        :data="dataTable" :options="options" />
     </div>
   </div>
 </template>
